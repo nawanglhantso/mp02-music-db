@@ -6,10 +6,11 @@ Author 2 module — all query functions
 
 CONTRACT SUMMARY
 ----------------
-Implement the four functions below exactly as specified.  Every function
-accepts a conn argument and returns results as a list of rows (the output
-of .fetchall()).  The Integrator's main.py calls these functions and handles
-all output formatting — do NOT print inside any of these functions.
+Implement the four functions below exactly as specified.  All functions
+accept a conn argument.  Functions 1, 2, and 4 return query results as a
+list of rows, while Function 3 returns a single row for the most-added
+track.  The Integrator's main.py calls these functions and handles all
+output formatting — do NOT print inside any of these functions.
 
 REQUIRED (graded):
     ✓ get_playlist_tracks(conn, playlist_name)   — JOIN across 4 tables; ORDER BY position
@@ -69,7 +70,7 @@ def get_playlist_tracks(conn, playlist_name):
             ON T.artist_id = A.artist_id
         JOIN Playlist P
             ON PT.playlist_id = P.playlist_id
-        WHERE P.playlist_name = ?
+        WHERE LOWER(TRIM(P.playlist_name)) = LOWER(TRIM(?))
         ORDER BY PT.position ASC
     """
     return conn.execute(query, (playlist_name,)).fetchall()
@@ -110,6 +111,7 @@ def get_tracks_on_no_playlist(conn):
         LEFT JOIN PlaylistTrack PT
             ON T.track_id = PT.track_id
         WHERE PT.track_id IS NULL
+        ORDER BY T.track_id ASC
     """
     return conn.execute(query).fetchall()
 
@@ -148,10 +150,10 @@ def get_most_added_track(conn):
         JOIN Artist A
             ON T.artist_id = A.artist_id
         GROUP BY PT.track_id, T.title, A.name
-        ORDER BY playlist_count DESC
+        ORDER BY playlist_count DESC, T.title ASC
         LIMIT 1
     """
-    return conn.execute(query).fetchall()
+    return conn.execute(query).fetchone()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -189,7 +191,7 @@ def get_playlist_durations(conn):
         JOIN Track T
             ON PT.track_id = T.track_id
         GROUP BY P.playlist_id, P.playlist_name
-        ORDER BY total_minutes DESC
+        ORDER BY total_minutes DESC, P.playlist_name ASC
     """
     return conn.execute(query).fetchall()
 
@@ -242,8 +244,8 @@ if __name__ == "__main__":
         (5, "Orphan Track", 170, 1),  # intentionally not added to any playlist
     ])
     conn.executemany("INSERT OR IGNORE INTO Playlist VALUES (?,?,?)", [
-        (1, "Morning Commute", "Student A"),
-        (2, "Study Session",   "Student B"),
+        (1, "Day Drive", "Shamiur"),
+        (2, "Chill",     "Nawang"),
     ])
     conn.executemany("INSERT OR IGNORE INTO PlaylistTrack VALUES (?,?,?)", [
         (1, 1, 1), (1, 2, 2), (1, 3, 3),
@@ -253,8 +255,8 @@ if __name__ == "__main__":
 
     # Run each function and print a brief result summary
     print("=" * 60)
-    print("Function 1 — get_playlist_tracks('Morning Commute')")
-    rows = get_playlist_tracks(conn, "Morning Commute")
+    print("Function 1 — get_playlist_tracks('Day Drive')")
+    rows = get_playlist_tracks(conn, "Day Drive")
     if rows:
         for row in rows:
             print(f"  pos {row[3]:>2} | {row[0]:<20} | {row[1]:<20} | {row[2]}s")
@@ -272,9 +274,8 @@ if __name__ == "__main__":
 
     print()
     print("Function 3 — get_most_added_track()")
-    rows = get_most_added_track(conn)
-    if rows:
-        row = rows[0]
+    row = get_most_added_track(conn)
+    if row:
         print(f"  {row[0]} by {row[1]} — appears on {row[2]} playlist(s)")
     else:
         print("  (no row returned — check your query)")
