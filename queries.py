@@ -1,6 +1,6 @@
 """
 queries.py
-==========
+
 CIS 3120 · MP02 — SQL and Database
 Author 2 module — all query functions
 
@@ -32,7 +32,6 @@ import sqlite3
 # ─────────────────────────────────────────────────────────────────────────────
 # FUNCTION 1 — Playlist track listing
 # ─────────────────────────────────────────────────────────────────────────────
-
 def get_playlist_tracks(conn, playlist_name):
     """Return all tracks on the named playlist, ordered by position.
 
@@ -57,6 +56,26 @@ def get_playlist_tracks(conn, playlist_name):
     list of tuples  [(title, artist_name, duration_seconds, position), ...]
     Empty list if the playlist name does not exist.
     """
+
+
+
+    # TODO: write a SELECT query that joins PlaylistTrack, Track, Artist, and Playlist.
+    #       Filter by Playlist.playlist_name = ? using a parameterised query.
+    #       Order results by PlaylistTrack.position ASC.
+    #
+    # Hint: start from PlaylistTrack and join outward:
+    #   FROM PlaylistTrack pt
+    #   JOIN Track    t  ON pt.track_id    = t.track_id
+    #   JOIN Artist   a  ON t.artist_id    = a.artist_id
+    #   JOIN Playlist p  ON pt.playlist_id = p.playlist_id
+    #   WHERE p.playlist_name = ?
+    #
+    # Your query here:
+    # TODO: replace the stub query below with your actual SELECT statement.
+    #       The stub returns an empty result set so the function is callable
+    #       before implementation.  The ? placeholder must match playlist_name.
+
+   
     query = """
         SELECT
             T.title,
@@ -100,6 +119,19 @@ def get_tracks_on_no_playlist(conn):
     list of tuples  [(track_id, title, artist_name), ...]
     Empty list if every track belongs to at least one playlist.
     """
+    # TODO: write a SELECT query using LEFT JOIN between Track and PlaylistTrack.
+    #       After the LEFT JOIN, filter rows where PlaylistTrack.track_id IS NULL.
+    #       Also join Artist to retrieve the artist name.
+    #
+    # Hint:
+    #   FROM   Track t
+    #   JOIN   Artist a          ON t.artist_id = a.artist_id
+    #   LEFT JOIN PlaylistTrack pt ON t.track_id = pt.track_id
+    #   WHERE  pt.track_id IS NULL
+    #
+    # Your query here:
+ 
+
     query = """
         SELECT
             T.track_id,
@@ -139,6 +171,21 @@ def get_most_added_track(conn):
     One tuple  (title, artist_name, playlist_count)
     None if PlaylistTrack is empty.
     """
+    # TODO: write a SELECT query that groups PlaylistTrack by track_id,
+    #       counts the rows per group, joins Track and Artist for the names,
+    #       orders by COUNT(*) DESC, and limits to 1 row.
+    #
+    # Hint:
+    #   SELECT t.title, a.name, COUNT(*) AS playlist_count
+    #   FROM   PlaylistTrack pt
+    #   JOIN   Track  t ON pt.track_id  = t.track_id
+    #   JOIN   Artist a ON t.artist_id  = a.artist_id
+    #   GROUP BY pt.track_id
+    #   ORDER BY playlist_count DESC
+    #   LIMIT 1
+    #
+    # Your query here:
+  
     query = """
         SELECT
             T.title,
@@ -181,6 +228,23 @@ def get_playlist_durations(conn):
     list of tuples  [(playlist_name, total_minutes), ...]
     Empty list if PlaylistTrack is empty.
     """
+    # TODO: write a SELECT query that:
+    #   - joins Playlist, PlaylistTrack, and Track
+    #   - groups by Playlist.playlist_id (or playlist_name)
+    #   - selects Playlist.playlist_name and SUM(Track.duration_seconds) / 60.0
+    #   - orders by the SUM DESC
+    #
+    # Hint:
+    #   SELECT  p.playlist_name,
+    #           SUM(t.duration_seconds) / 60.0 AS total_minutes
+    #   FROM    Playlist      p
+    #   JOIN    PlaylistTrack pt ON p.playlist_id = pt.playlist_id
+    #   JOIN    Track         t  ON pt.track_id   = t.track_id
+    #   GROUP BY p.playlist_id
+    #   ORDER BY total_minutes DESC
+    #
+    # Your query here:
+  
     query = """
         SELECT
             P.playlist_name,
@@ -194,7 +258,6 @@ def get_playlist_durations(conn):
         ORDER BY total_minutes DESC, P.playlist_name ASC
     """
     return conn.execute(query).fetchall()
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Standalone smoke test  (run:  python queries.py)
